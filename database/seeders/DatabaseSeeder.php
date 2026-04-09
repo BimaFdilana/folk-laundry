@@ -25,6 +25,8 @@ class DatabaseSeeder extends Seeder
         // 3. Data master laundry
         $this->call(HargaSeeder::class);
         $this->call(PaketSeeder::class);
+        $this->call(KategoriSeeder::class);   // harus sebelum InventarisSeeder
+        $this->call(InventarisSeeder::class);
 
         // 4. Setting aplikasi
         $this->call(SettingPageSeeder::class);

@@ -14,11 +14,15 @@ class ChangeKuotaToDecimalInKuotaLaundryTable extends Migration
      */
     public function up()
     {
-        DB::statement('ALTER TABLE kuota_laundry MODIFY kuota DECIMAL(8,2)');
+        if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE kuota_laundry MODIFY kuota DECIMAL(8,2)');
+        }
     }
 
     public function down()
     {
-        DB::statement('ALTER TABLE kuota_laundry MODIFY kuota INTEGER');
+        if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE kuota_laundry MODIFY kuota INTEGER');
+        }
     }
 }

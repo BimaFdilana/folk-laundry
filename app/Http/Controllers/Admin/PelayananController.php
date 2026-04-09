@@ -281,6 +281,16 @@ class PelayananController extends Controller
     {
         $statusorder = Transaksi::find($request->id);
 
+        if (!$statusorder) {
+            return redirect()->back()->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        // Validasi: tidak boleh Delivery jika pembayaran belum lunas
+        if ($request->status_order === 'Delivery' && $statusorder->status_payment !== 'Success') {
+            Session::flash('error', 'Gagal! Status tidak bisa diubah ke "Diambil" karena pembayaran masih ' . $statusorder->status_payment . '. Selesaikan pembayaran terlebih dahulu.');
+            return redirect()->route('pelayanan.index');
+        }
+
         $statusorder->update([
             'status_order' => $request->status_order,
         ]);
