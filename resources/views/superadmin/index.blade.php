@@ -172,49 +172,19 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <h4 class="card-title">Pendapatan Per-hari</h4>
-                    <span>{{ \Carbon\Carbon::now()->format('F Y') }}</span>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Grafik Pendapatan</h4>
+                    <div class="btn-group" role="group" aria-label="Waktu Filter">
+                        <button type="button" class="btn btn-outline-primary active" id="btn-harian">Harian</button>
+                        <button type="button" class="btn btn-outline-primary" id="btn-mingguan">Mingguan</button>
+                        <button type="button" class="btn btn-outline-primary" id="btn-bulanan">Bulanan</button>
+                        <button type="button" class="btn btn-outline-primary" id="btn-tahunan">Tahunan</button>
+                    </div>
                 </div>
                 <div class="card-content">
                     <div class="card-body pb-0">
                         <div style="overflow-x: auto;">
-                            <div id="data-hari" style="min-width: 1000px;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <h4 class="card-title">Pendapatan Per-bulan</h4>
-                    <span>{{ \Carbon\Carbon::now()->format('Y') }}</span>
-                </div>
-                <div class="card-content">
-                    <div style="overflow-x: auto;">
-                        <div id="data-bulan" style="min-width: 1000px;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <h4 class="card-title">Pendapatan Per-tahun</h4>
-                    <span>{{ $startYear }} - {{ $currentYear }}</span>
-                </div>
-                <div class="card-content">
-                    <div class="card-body pb-0">
-                        <div style="overflow-x: auto;">
-                            {{-- Misalnya hitung jumlah tahun --}}
-                            @php
-                                $jumlahTahun = $currentYear - $startYear + 1;
-                                $lebarGrafik = $jumlahTahun * 100; // 100px per tahun (misal)
-                            @endphp
-                            <div id="data-tahun" style="min-width: {{ $lebarGrafik }}px;"></div>
+                            <div id="data-chart" style="min-width: 1000px;"></div>
                         </div>
                     </div>
                 </div>
@@ -229,182 +199,43 @@
         var $purple = '#df87f2';
         var $strok_color = '#b9c3cd';
 
-        // Grafik Pendapatan Harian
-        var salesavgChartoptions = {
-            chart: {
-                height: 270,
-                toolbar: {
-                    show: false
-                },
-                type: 'line',
-                dropShadow: {
-                    enabled: true,
-                    top: 20,
-                    left: 2,
-                    blur: 6,
-                    opacity: 0.20
-                },
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 4,
-            },
-            grid: {
-                borderColor: $label_color,
-            },
-            legend: {
-                show: false,
-            },
-            colors: ['#df87f2', '#7367F0', '#28C76F', '#EA5455'],
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shade: 'dark',
-                    inverseColors: false,
-                    gradientToColors: ['#df87f2', '#7367F0', '#28C76F', '#EA5455'],
-                    shadeIntensity: 1,
-                    type: 'horizontal',
-                    opacityFrom: 1,
-                    opacityTo: 1,
-                    stops: [0, 100, 100, 100]
-                },
-            },
-            markers: {
-                size: 0,
-                hover: {
-                    size: 5
-                }
-            },
-            xaxis: {
-                labels: {
-                    style: {
-                        colors: $strok_color,
-                    }
-                },
-                axisTicks: {
-                    show: false,
-                },
-                categories: [{{ $_tanggal }}],
-                axisBorder: {
-                    show: false,
-                },
-                tickPlacement: 'on'
-            },
-            yaxis: {
-                tickAmount: 5,
-                labels: {
-                    style: {
-                        color: $strok_color,
-                    },
-                    formatter: function(val) {
-                        return val > 999 ? (val / 1000).toFixed(1) + 'k' : val;
-                    }
-                }
-            },
-            tooltip: {
-                x: {
-                    show: false
-                }
-            },
+        // Data sources
+        const dataHarian = {
+            categories: [{{ $_tanggal }}],
             series: [{
                 name: "Reguler",
-                data: [{{ $_nilai_reg }}],
+                data: [{{ $_nilai_reg }}]
             }, {
                 name: "Satuan",
-                data: [{{ $_nilai_satuan }}],
+                data: [{{ $_nilai_satuan }}]
             }, {
                 name: "Paket Laundry (Kuota)",
-                data: [{{ $_nilai_pem_kuota }}],
+                data: [{{ $_nilai_pem_kuota }}]
             }, {
                 name: "Pemasukan Lain",
-                data: [{{ $_nilai_pem_nonkuota }}],
-            }],
-        }
+                data: [{{ $_nilai_pem_nonkuota }}]
+            }]
+        };
 
-        var salesavgChart = new ApexCharts(
-            document.querySelector("#data-hari"),
-            salesavgChartoptions
-        );
+        const dataMingguan = {
+            categories: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4', 'Minggu 5'],
+            series: [{
+                name: "Reguler",
+                data: [{{ $_nilai_mingguan_reg }}]
+            }, {
+                name: "Satuan",
+                data: [{{ $_nilai_mingguan_satuan }}]
+            }, {
+                name: "Paket Laundry (Kuota)",
+                data: [{{ $_nilai_mingguan_pem_kuota }}]
+            }, {
+                name: "Pemasukan Lain",
+                data: [{{ $_nilai_mingguan_pem_nonkuota }}]
+            }]
+        };
 
-        salesavgChart.render();
-
-        // Grafik Pendapatan Bulanan
-        var salesavgChartoptions = {
-            chart: {
-                height: 270,
-                toolbar: {
-                    show: false
-                },
-                type: 'line',
-                dropShadow: {
-                    enabled: true,
-                    top: 20,
-                    left: 2,
-                    blur: 6,
-                    opacity: 0.20
-                },
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 4,
-            },
-            grid: {
-                borderColor: $label_color,
-            },
-            legend: {
-                show: false,
-            },
-            colors: ['#df87f2', '#7367F0', '#28C76F', '#EA5455'],
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shade: 'dark',
-                    inverseColors: false,
-                    gradientToColors: ['#df87f2', '#7367F0', '#28C76F', '#EA5455'],
-                    shadeIntensity: 1,
-                    type: 'horizontal',
-                    opacityFrom: 1,
-                    opacityTo: 1,
-                    stops: [0, 100, 100, 100]
-                },
-            },
-            markers: {
-                size: 0,
-                hover: {
-                    size: 5
-                }
-            },
-            xaxis: {
-                labels: {
-                    style: {
-                        colors: $strok_color,
-                    }
-                },
-                axisTicks: {
-                    show: false,
-                },
-                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                axisBorder: {
-                    show: false,
-                },
-                tickPlacement: 'on'
-            },
-            yaxis: {
-                tickAmount: 5,
-                labels: {
-                    style: {
-                        color: $strok_color,
-                    },
-                    formatter: function(val) {
-                        return val > 999 ? (val / 1000).toFixed(1) + 'k' : val;
-                    }
-                }
-            },
-            tooltip: {
-                x: {
-                    show: false
-                }
-            },
+        const dataBulanan = {
+            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
             series: [{
                 name: "Reguler",
                 data: [{{ implode(',', $bulananReg) }}]
@@ -417,90 +248,100 @@
             }, {
                 name: "Pemasukan Lain",
                 data: [{{ implode(',', $bulananPem) }}]
-            }],
-        }
+            }]
+        };
 
-        var salesavgChart = new ApexCharts(
-            document.querySelector("#data-bulan"),
-            salesavgChartoptions
-        );
+        const dataTahunan = {
+            categories: {!! json_encode(range($startYear, $currentYear)) !!},
+            series: [{
+                name: "Reguler",
+                data: {!! json_encode($tahunanReg) !!}
+            }, {
+                name: "Satuan",
+                data: {!! json_encode($tahunanSat) !!}
+            }, {
+                name: "Paket Laundry (Kuota)",
+                data: {!! json_encode($tahunanPemKuota) !!}
+            }, {
+                name: "Pemasukan Lain",
+                data: {!! json_encode($tahunanPem) !!}
+            }]
+        };
 
-        salesavgChart.render();
+        var salesavgChartoptions = {
+            chart: {
+                height: 300,
+                toolbar: { show: false },
+                type: 'line',
+                dropShadow: {
+                    enabled: true,
+                    top: 20,
+                    left: 2,
+                    blur: 6,
+                    opacity: 0.20
+                },
+            },
+            stroke: { curve: 'smooth', width: 4 },
+            grid: { borderColor: $label_color },
+            legend: { show: true },
+            colors: ['#df87f2', '#7367F0', '#28C76F', '#EA5455'],
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'dark',
+                    inverseColors: false,
+                    gradientToColors: ['#df87f2', '#7367F0', '#28C76F', '#EA5455'],
+                    shadeIntensity: 1,
+                    type: 'horizontal',
+                    opacityFrom: 1,
+                    opacityTo: 1,
+                    stops: [0, 100, 100, 100]
+                },
+            },
+            markers: { size: 0, hover: { size: 5 } },
+            xaxis: {
+                labels: { style: { colors: $strok_color } },
+                axisTicks: { show: false },
+                categories: dataHarian.categories,
+                axisBorder: { show: false },
+                tickPlacement: 'on'
+            },
+            yaxis: {
+                labels: {
+                    style: { color: $strok_color },
+                    formatter: function(val) {
+                        return val > 999 ? (val / 1000).toFixed(1) + 'k' : val;
+                    }
+                }
+            },
+            tooltip: { x: { show: true } },
+            series: dataHarian.series
+        };
 
-        // Grafik Pendapatan Tahunan
-        var tahunanChart = new ApexCharts(
-            document.querySelector("#data-tahun"), {
-                chart: {
-                    height: 300,
-                    type: 'line',
-                    dropShadow: {
-                        enabled: true,
-                        top: 20,
-                        left: 2,
-                        blur: 6,
-                        opacity: 0.20
-                    },
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 4,
-                },
-                grid: {
-                    borderColor: $label_color,
-                },
-                colors: ['#df87f2', '#7367F0', '#28C76F', '#EA5455'],
-                fill: {
-                    type: 'gradient',
-                    gradient: {
-                        shade: 'dark',
-                        inverseColors: false,
-                        gradientToColors: ['#df87f2', '#7367F0', '#28C76F', '#EA5455'],
-                        shadeIntensity: 1,
-                        type: 'horizontal',
-                        opacityFrom: 1,
-                        opacityTo: 1,
-                        stops: [0, 100, 100, 100]
-                    },
-                },
-                xaxis: {
-                    categories: {!! json_encode(range($startYear, $currentYear)) !!},
-                    labels: {
-                        style: {
-                            colors: $strok_color,
-                        }
-                    }
-                },
-                yaxis: {
-                    labels: {
-                        style: {
-                            color: $strok_color,
-                        },
-                        formatter: function(val) {
-                            return val > 999 ? (val / 1000).toFixed(1) + 'k' : val;
-                        }
-                    }
-                },
-                tooltip: {
-                    x: {
-                        show: true
-                    }
-                },
-                series: [{
-                    name: "Reguler",
-                    data: {!! json_encode($tahunanReg) !!}
-                }, {
-                    name: "Satuan",
-                    data: {!! json_encode($tahunanSat) !!}
-                }, {
-                    name: "Paket Laundry (Kuota)",
-                    data: {!! json_encode($tahunanPemKuota) !!}
-                }, {
-                    name: "Pemasukan Lain",
-                    data: {!! json_encode($tahunanPem) !!}
-                }]
-            }
-        );
-        tahunanChart.render();
+        var mainChart = new ApexCharts(document.querySelector("#data-chart"), salesavgChartoptions);
+        mainChart.render();
+
+        // Bind events
+        $('#btn-harian').on('click', function() {
+            $('.btn-group button').removeClass('active'); $(this).addClass('active');
+            mainChart.updateOptions({ xaxis: { categories: dataHarian.categories } });
+            mainChart.updateSeries(dataHarian.series);
+        });
+        $('#btn-mingguan').on('click', function() {
+            $('.btn-group button').removeClass('active'); $(this).addClass('active');
+            mainChart.updateOptions({ xaxis: { categories: dataMingguan.categories } });
+            mainChart.updateSeries(dataMingguan.series);
+        });
+        $('#btn-bulanan').on('click', function() {
+            $('.btn-group button').removeClass('active'); $(this).addClass('active');
+            mainChart.updateOptions({ xaxis: { categories: dataBulanan.categories } });
+            mainChart.updateSeries(dataBulanan.series);
+        });
+        $('#btn-tahunan').on('click', function() {
+            $('.btn-group button').removeClass('active'); $(this).addClass('active');
+            mainChart.updateOptions({ xaxis: { categories: dataTahunan.categories } });
+            mainChart.updateSeries(dataTahunan.series);
+        });
     </script>
     <script type="text/javascript">
         var $primary = '#7367F0';
