@@ -159,15 +159,7 @@
                             </div>
                         </div>
 
-                        <div id="info-harian" class="chart-info d-flex justify-content-between mb-25">
-                            <div class="series-info d-flex align-items-center">
-                                <i class="fa fa-circle-o text-bold-700 text-danger"></i>
-                                <span class="text-bold-600 ml-50">Hari Ini</span>
-                            </div>
-                            <div class="product-result">
-                                <span>{{ Rupiah::getRupiah($hari) }}</span>
-                            </div>
-                        </div>
+                        
 
 
 
