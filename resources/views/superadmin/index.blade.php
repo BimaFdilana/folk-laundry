@@ -115,18 +115,23 @@
         </div>
         <div class="col-lg-6 col-12 d-flex">
             <div class="card w-100 h-80">
-                <div class="card-header d-flex justify-content-between">
+                <div class="card-header d-flex justify-content-between flex-wrap align-items-center">
                     <h4 class="card-title">Pemasukan</h4>
-                    <h4 class="card-title">
-                        <span>{{ Rupiah::getRupiah($totalPemasukan) }}</span>
-                    </h4>
+                    <div class="btn-group mt-1 mt-md-0" role="group" aria-label="Waktu Filter Radial">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" id="btn-rad-semua">Semua</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-rad-harian">Harian</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-rad-mingguan">Mingguan</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-rad-bulanan">Bulanan</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-rad-tahunan">Tahunan</button>
+                    </div>
                 </div>
                 <div class="card-content">
                     <div class="card-body pt-50">
                         <div id="product-order-chart" class="mb-2"></div>
-                        <div class="chart-info d-flex justify-content-between mb-1">
+                        
+                        <div id="info-tahunan" class="chart-info d-flex justify-content-between mb-1">
                             <div class="series-info d-flex align-items-center">
-                                <i class="fa fa-circle-o text-bold-700 text-primary"></i>
+                                <i class="fa fa-circle-o text-bold-700" style="color: #9c8cfc;"></i>
                                 <span class="text-bold-600 ml-50">Tahun Ini</span>
                             </div>
                             <div class="product-result">
@@ -134,13 +139,33 @@
                             </div>
                         </div>
 
-                        <div class="chart-info d-flex justify-content-between mb-1">
+                        <div id="info-bulanan" class="chart-info d-flex justify-content-between mb-1">
                             <div class="series-info d-flex align-items-center">
-                                <i class="fa fa-circle-o text-bold-700 text-warning"></i>
+                                <i class="fa fa-circle-o text-bold-700" style="color: #FFC085;"></i>
                                 <span class="text-bold-600 ml-50">Bulan Ini</span>
                             </div>
                             <div class="product-result">
                                 <span>{{ Rupiah::getRupiah($bulan) }}</span>
+                            </div>
+                        </div>
+
+                        <div id="info-mingguan" class="chart-info d-flex justify-content-between mb-1">
+                            <div class="series-info d-flex align-items-center">
+                                <i class="fa fa-circle-o text-bold-700" style="color: #28C76F;"></i>
+                                <span class="text-bold-600 ml-50">Minggu Ini</span>
+                            </div>
+                            <div class="product-result">
+                                <span>{{ Rupiah::getRupiah($minggu) }}</span>
+                            </div>
+                        </div>
+
+                        <div id="info-harian" class="chart-info d-flex justify-content-between mb-25">
+                            <div class="series-info d-flex align-items-center">
+                                <i class="fa fa-circle-o text-bold-700 text-danger"></i>
+                                <span class="text-bold-600 ml-50">Hari Ini</span>
+                            </div>
+                            <div class="product-result">
+                                <span>{{ Rupiah::getRupiah($hari) }}</span>
                             </div>
                         </div>
 
@@ -347,8 +372,10 @@
         var $primary = '#7367F0';
         var $danger = '#EA5455';
         var $warning = '#FF9F43';
+        var $success = '#28C76F';
         var $primary_light = '#9c8cfc';
         var $warning_light = '#FFC085';
+        var $success_light = '#69f5a7';
         var $danger_light = '#f29292';
 
         // Data Finance
@@ -357,7 +384,7 @@
                 height: 325,
                 type: 'radialBar',
             },
-            colors: [$primary, $warning, $danger],
+            colors: [$primary, $warning, $success, $danger],
             fill: {
                 type: 'gradient',
                 gradient: {
@@ -365,7 +392,7 @@
                     shade: 'dark',
                     type: 'vertical',
                     shadeIntensity: 0.5,
-                    gradientToColors: [$primary_light, $warning_light, $danger_light],
+                    gradientToColors: [$primary_light, $warning_light, $success_light, $danger_light],
                     inverseColors: false,
                     opacityFrom: 1,
                     opacityTo: 1,
@@ -391,6 +418,9 @@
                         },
                         value: {
                             fontSize: '16px',
+                            formatter: function (val) {
+                                return val + "%"
+                            }
                         },
                         total: {
                             show: true,
@@ -403,8 +433,8 @@
                     }
                 }
             },
-            series: [{{ $ny }}, {{ $nm }}, {{ $nd }}],
-            labels: ['Tahun Ini', 'Bulan Ini', 'Hari Ini'],
+            series: [{{ $ny }}, {{ $nm }}, {{ $nw }}, {{ $nd }}],
+            labels: ['Tahun Ini', 'Bulan Ini', 'Minggu Ini', 'Hari Ini'],
         }
 
         var orderChart = new ApexCharts(
@@ -413,6 +443,50 @@
         );
 
         orderChart.render();
+        
+        // Filter logic for radial chart
+        function resetRadialInfo() {
+            $('#info-tahunan, #info-bulanan, #info-mingguan, #info-harian').show();
+        }
+
+        $('#btn-rad-semua').on('click', function() {
+            $('[id^="btn-rad-"]').removeClass('active'); $(this).addClass('active');
+            orderChart.updateSeries([{{ $ny }}, {{ $nm }}, {{ $nw }}, {{ $nd }}]);
+            orderChart.updateOptions({ colors: [$primary, $warning, $success, $danger], labels: ['Tahun Ini', 'Bulan Ini', 'Minggu Ini', 'Hari Ini'] });
+            resetRadialInfo();
+        });
+
+        $('#btn-rad-harian').on('click', function() {
+            $('[id^="btn-rad-"]').removeClass('active'); $(this).addClass('active');
+            orderChart.updateSeries([{{ $nd }}]);
+            orderChart.updateOptions({ colors: [$danger], labels: ['Hari Ini'] });
+            resetRadialInfo();
+            $('#info-tahunan, #info-bulanan, #info-mingguan').hide();
+        });
+
+        $('#btn-rad-mingguan').on('click', function() {
+            $('[id^="btn-rad-"]').removeClass('active'); $(this).addClass('active');
+            orderChart.updateSeries([{{ $nw }}]);
+            orderChart.updateOptions({ colors: [$success], labels: ['Minggu Ini'] });
+            resetRadialInfo();
+            $('#info-tahunan, #info-bulanan, #info-harian').hide();
+        });
+
+        $('#btn-rad-bulanan').on('click', function() {
+            $('[id^="btn-rad-"]').removeClass('active'); $(this).addClass('active');
+            orderChart.updateSeries([{{ $nm }}]);
+            orderChart.updateOptions({ colors: [$warning], labels: ['Bulan Ini'] });
+            resetRadialInfo();
+            $('#info-tahunan, #info-mingguan, #info-harian').hide();
+        });
+
+        $('#btn-rad-tahunan').on('click', function() {
+            $('[id^="btn-rad-"]').removeClass('active'); $(this).addClass('active');
+            orderChart.updateSeries([{{ $ny }}]);
+            orderChart.updateOptions({ colors: [$primary], labels: ['Tahun Ini'] });
+            resetRadialInfo();
+            $('#info-bulanan, #info-mingguan, #info-harian').hide();
+        });
         // End Data Finance
     </script>
 @endsection

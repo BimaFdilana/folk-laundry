@@ -270,11 +270,31 @@ class HomeController extends Controller
                 $lainTahun = $pemasukanLainList->where('created_at', '>=', $today->copy()->startOfYear())
                     ->where('created_at', '<=', $today->copy()->endOfYear())
                     ->sum('total');
+                
+                // --- Tambahan: Kalkulasi Minggu Ini ---
+                $startOfWeek = $today->copy()->startOfWeek();
+                $endOfWeek = $today->copy()->endOfWeek();
+
+                $transaksiMinggu = Transaksi::where('status_payment', 'Success')
+                    ->whereBetween('created_at', [$startOfWeek, $endOfWeek])->sum('harga_akhir');
+                $satuanMinggu = TransaksiSatuan::where('status_payment', 'Success')
+                    ->whereBetween('created_at', [$startOfWeek, $endOfWeek])->sum('harga_akhir');
+                
+                $prMinggu = $purchaseKuotaList->where('created_at', '>=', $startOfWeek)
+                    ->where('created_at', '<=', $endOfWeek)->sum('package_price');
+                $kuotaManualMinggu = $kuotaList->where('created_at', '>=', $startOfWeek)
+                    ->where('created_at', '<=', $endOfWeek)->sum('total');
+                $kuotaMinggu = $prMinggu + $kuotaManualMinggu;
+
+                $lainMinggu = $pemasukanLainList->where('created_at', '>=', $startOfWeek)
+                    ->where('created_at', '<=', $endOfWeek)->sum('total');
+                // ----------------------------------------
 
                 $totalPemasukan = $totalTransaksi + $totalSatuan + $totalKuota + $pemasukanManualLain;
 
                 // Total harian, bulanan, tahunan gabungan
                 $hari = $transaksiHari + $satuanHari + $kuotaHari + $lainHari;
+                $minggu = $transaksiMinggu + $satuanMinggu + $kuotaMinggu + $lainMinggu;
                 $bulan = $transaksiBulan + $satuanBulan + $kuotaBulan + $lainBulan;
                 $tahun = $transaksiTahun + $satuanTahun + $kuotaTahun + $lainTahun;
 
@@ -293,8 +313,12 @@ class HomeController extends Controller
                 }
 
                 // Grafik: Pencapaian terhadap target
+                // Target mingguan diasumsikan dari target harian * 7 jika belum ada khusus minggu
+                $targetMinggu = $targetHari * 7;
+
                 $ny = $targetTahun > 0 ? round(($tahun / $targetTahun) * 100, 2) : 0;
                 $nm = $targetBulan > 0 ? round(($bulan / $targetBulan) * 100, 2) : 0;
+                $nw = $targetMinggu > 0 ? round(($minggu / $targetMinggu) * 100, 2) : 0;
                 $nd = $targetHari > 0 ? round(($hari / $targetHari) * 100, 2) : 0;
 
                 // Target laundry
@@ -552,10 +576,12 @@ class HomeController extends Controller
                     'kgTahunIni',
                     'tahun',
                     'bulan',
+                    'minggu',
                     'hari',
                     'transaksi',
                     'ny',
                     'nm',
+                    'nw',
                     'nd',
                     'totalPemasukan'
                 ))->with('_tanggal', rtrim($tanggal, ','))
