@@ -158,17 +158,27 @@
             var customer = $("#customer").val();
             var status_order = $("#status_order").val();
 
-            $.get('{{ Url('ubah-status-order') }}', {
-                '_token': $('meta[name=csrf-token]').attr('content'),
-                id: id,
-                customer: customer,
-                status_order: status_order
-            }, function(resp) {
-                $("#id").val('');
-                $("#customer").val('');
-                $("#status_order").val('');
-
-                location.reload();
+            $.ajax({
+                url: '{{ Url('ubah-status-order') }}',
+                method: 'GET',
+                data: {
+                    '_token': $('meta[name=csrf-token]').attr('content'),
+                    id: id,
+                    customer: customer,
+                    status_order: status_order
+                },
+                success: function(resp) {
+                    $("#id").val('');
+                    $("#customer").val('');
+                    $("#status_order").val('');
+                    $('#ubah_status').modal('hide');
+                    location.reload();
+                },
+                error: function(xhr) {
+                    $('#ubah_status').modal('hide');
+                    var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Terjadi kesalahan. Coba lagi.';
+                    alert('⚠️ ' + msg);
+                }
             });
         });
 

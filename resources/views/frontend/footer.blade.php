@@ -21,9 +21,9 @@
                             </div>
                             <!-- social -->
                             <div class="footer-social">
-                                <a href="{{ $setpage->instagram }}" target="_blank"><i class="fab fa-instagram"></i></a>
-                                <a href="{{ $setpage->twitter }}" target="_blank"><i class="fab fa-twitter"></i></a>
-                                <a href="{{ $setpage->facebook }}" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                                <a href="{{ optional($setpage)->instagram }}" target="_blank"><i class="fab fa-instagram"></i></a>
+                                <a href="{{ optional($setpage)->twitter }}" target="_blank"><i class="fab fa-twitter"></i></a>
+                                <a href="{{ optional($setpage)->facebook }}" target="_blank"><i class="fab fa-facebook-f"></i></a>
                             </div>
                         </div>
                     </div>
@@ -48,9 +48,9 @@
                         <div class="footer-tittle">
                             <h4>Get in touch</h4>
                             <ul>
-                                <li class="number"><a href="https://wa.me/{{ $setpage->whatsapp }}"
-                                        target="_blank">+{{ $setpage->whatsapp }}</a></li>
-                                <li><a href="mailto:{{ $setpage->email }}" target="_blank">{{ $setpage->email }}</a>
+                                <li class="number"><a href="https://wa.me/{{ optional($setpage)->whatsapp }}"
+                                        target="_blank">+{{ optional($setpage)->whatsapp }}</a></li>
+                                <li><a href="mailto:{{ optional($setpage)->email }}" target="_blank">{{ optional($setpage)->email }}</a>
                                 </li>
                             </ul>
                         </div>

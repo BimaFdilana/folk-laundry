@@ -204,6 +204,13 @@ class TransaksiSatuanController extends Controller
             return response()->json(['error' => 'Transaksi satuan tidak ditemukan.'], 404);
         }
 
+        // Validasi: tidak boleh Delivery jika pembayaran belum lunas
+        if ($request->status_order === 'Delivery' && $statusorder->status_payment !== 'Success') {
+            return response()->json([
+                'error' => 'Gagal! Status tidak bisa diubah ke "Diambil" karena pembayaran masih ' . $statusorder->status_payment . '. Selesaikan pembayaran terlebih dahulu.'
+            ], 422);
+        }
+
         $statusorder->update([
             'status_order' => $request->status_order,
         ]);

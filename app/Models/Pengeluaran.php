@@ -17,6 +17,7 @@ class Pengeluaran extends Model
         'total',
         'keterangan',
         'tanggal',
+        'metode_pembayaran',
     ];
 
     protected static function boot()

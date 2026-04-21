@@ -24,8 +24,8 @@
                 </div>
             </div>
             <div class="header-right d-none d-lg-block">
-                <a href="https://wa.me/{{ $setpage->whatsapp }}" target="_blank" class="header-btn1"><img
-                        src="{{ asset('assets/img/icon/call.png') }}" alt="">+{{ $setpage->whatsapp }}</a>
+                <a href="https://wa.me/{{ optional($setpage)->whatsapp }}" target="_blank" class="header-btn1"><img
+                        src="{{ asset('assets/img/icon/call.png') }}" alt="">+{{ optional($setpage)->whatsapp }}</a>
                 <a href="{{ route('login') }}" class="header-btn2">Login</a>
             </div>
             <!-- Mobile Menu -->

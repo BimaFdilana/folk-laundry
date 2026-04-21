@@ -108,6 +108,35 @@ class HomeController extends Controller
                 $nov = Transaksi::where('bulan', 11)->where('tahun', Carbon::now()->format('Y'))->count();
                 $dec = Transaksi::where('bulan', 12)->where('tahun', Carbon::now()->format('Y'))->count();
 
+                // Statistik Mingguan
+                $weeks = DB::table('transaksis')
+                    ->select(DB::raw('CEIL(DAY(created_at) / 7) AS week'), DB::raw('count(id) AS jml'))
+                    ->whereYear('created_at', '=', date("Y", strtotime(now())))
+                    ->whereMonth('created_at', '=', date("m", strtotime(now())))
+                    ->groupBy('week')
+                    ->get();
+                $mingguStr = [0, 0, 0, 0, 0];
+                foreach ($weeks as $w) {
+                    if ((int)$w->week >= 1 && (int)$w->week <= 5) {
+                         $mingguStr[(int)$w->week - 1] = $w->jml;
+                    }
+                }
+                $_nilai_mingguan = implode(',', $mingguStr);
+
+                // Statistik Tahunan
+                $startYear = now()->year - 4;
+                $currentYear = now()->year;
+                $_tanggal_tahunan = '';
+                $_nilai_tahunan = '';
+
+                for ($i = $startYear; $i <= $currentYear; $i++) {
+                    $_tanggal_tahunan .= $i . ',';
+                    $jmlTahun = Transaksi::whereYear('created_at', $i)->count();
+                    $_nilai_tahunan .= $jmlTahun . ',';
+                }
+                $_tanggal_tahunan = rtrim($_tanggal_tahunan, ',');
+                $_nilai_tahunan = rtrim($_nilai_tahunan, ',');
+
                 return view('modul_admin.index', compact(
                     'tanggal',
                     'targetHari',
@@ -124,6 +153,9 @@ class HomeController extends Controller
                     ->with('belumbayar', $belumbayar)
                     ->with('_tanggal', substr($tanggal, 0, -1))
                     ->with('_nilai', substr($nilai, 0, -1))
+                    ->with('_nilai_mingguan', $_nilai_mingguan)
+                    ->with('_tanggal_tahunan', $_tanggal_tahunan)
+                    ->with('_nilai_tahunan', $_nilai_tahunan)
                     ->with('diambil', $diambil)
                     ->with('jan', $jan)
                     ->with('feb', $feb)
@@ -238,11 +270,31 @@ class HomeController extends Controller
                 $lainTahun = $pemasukanLainList->where('created_at', '>=', $today->copy()->startOfYear())
                     ->where('created_at', '<=', $today->copy()->endOfYear())
                     ->sum('total');
+                
+                // --- Tambahan: Kalkulasi Minggu Ini ---
+                $startOfWeek = $today->copy()->startOfWeek();
+                $endOfWeek = $today->copy()->endOfWeek();
+
+                $transaksiMinggu = Transaksi::where('status_payment', 'Success')
+                    ->whereBetween('created_at', [$startOfWeek, $endOfWeek])->sum('harga_akhir');
+                $satuanMinggu = TransaksiSatuan::where('status_payment', 'Success')
+                    ->whereBetween('created_at', [$startOfWeek, $endOfWeek])->sum('harga_akhir');
+                
+                $prMinggu = $purchaseKuotaList->where('created_at', '>=', $startOfWeek)
+                    ->where('created_at', '<=', $endOfWeek)->sum('package_price');
+                $kuotaManualMinggu = $kuotaList->where('created_at', '>=', $startOfWeek)
+                    ->where('created_at', '<=', $endOfWeek)->sum('total');
+                $kuotaMinggu = $prMinggu + $kuotaManualMinggu;
+
+                $lainMinggu = $pemasukanLainList->where('created_at', '>=', $startOfWeek)
+                    ->where('created_at', '<=', $endOfWeek)->sum('total');
+                // ----------------------------------------
 
                 $totalPemasukan = $totalTransaksi + $totalSatuan + $totalKuota + $pemasukanManualLain;
 
                 // Total harian, bulanan, tahunan gabungan
                 $hari = $transaksiHari + $satuanHari + $kuotaHari + $lainHari;
+                $minggu = $transaksiMinggu + $satuanMinggu + $kuotaMinggu + $lainMinggu;
                 $bulan = $transaksiBulan + $satuanBulan + $kuotaBulan + $lainBulan;
                 $tahun = $transaksiTahun + $satuanTahun + $kuotaTahun + $lainTahun;
 
@@ -261,8 +313,12 @@ class HomeController extends Controller
                 }
 
                 // Grafik: Pencapaian terhadap target
+                // Target mingguan diasumsikan dari target harian * 7 jika belum ada khusus minggu
+                $targetMinggu = $targetHari * 7;
+
                 $ny = $targetTahun > 0 ? round(($tahun / $targetTahun) * 100, 2) : 0;
                 $nm = $targetBulan > 0 ? round(($bulan / $targetBulan) * 100, 2) : 0;
+                $nw = $targetMinggu > 0 ? round(($minggu / $targetMinggu) * 100, 2) : 0;
                 $nd = $targetHari > 0 ? round(($hari / $targetHari) * 100, 2) : 0;
 
                 // Target laundry
@@ -441,6 +497,62 @@ class HomeController extends Controller
                         ->sum('total');
                 }
 
+                // Statistik Mingguan
+                $mingguanRegArr = array_fill(1, 5, 0);
+                $mingguanSatArr = array_fill(1, 5, 0);
+                $mingguanPemKuotaArr = array_fill(1, 5, 0);
+                $mingguanPemArr = array_fill(1, 5, 0);
+
+                $weekReg = Transaksi::selectRaw('CEIL(DAY(created_at)/7) as week, SUM(harga_akhir) as total')
+                    ->whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->where('status_payment', 'Success')
+                    ->groupByRaw('CEIL(DAY(created_at)/7)')
+                    ->pluck('total', 'week');
+
+                $weekSat = TransaksiSatuan::selectRaw('CEIL(DAY(created_at)/7) as week, SUM(harga_akhir) as total')
+                    ->whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->where('status_payment', 'Success')
+                    ->groupByRaw('CEIL(DAY(created_at)/7)')
+                    ->pluck('total', 'week');
+
+                $weekPemKuota = Pemasukan::selectRaw('CEIL(DAY(created_at)/7) as week, SUM(total) as total')
+                    ->whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->where('kategori', 'like', 'Kuota%')
+                    ->groupByRaw('CEIL(DAY(created_at)/7)')
+                    ->pluck('total', 'week');
+
+                $weekPRKuota = PurchaseRequest::selectRaw('CEIL(DAY(created_at)/7) as week, SUM(package_price) as total')
+                    ->whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->where('status', 'confirmed')
+                    ->groupByRaw('CEIL(DAY(created_at)/7)')
+                    ->pluck('total', 'week');
+
+                $weekPem = Pemasukan::selectRaw('CEIL(DAY(created_at)/7) as week, SUM(total) as total')
+                    ->whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->where(function ($q) {
+                        $q->whereNull('kategori')
+                            ->orWhere('kategori', 'not like', 'Kuota%');
+                    })
+                    ->groupByRaw('CEIL(DAY(created_at)/7)')
+                    ->pluck('total', 'week');
+
+                for ($i = 1; $i <= 5; $i++) {
+                    $mingguanRegArr[$i] = $weekReg[$i] ?? 0;
+                    $mingguanSatArr[$i] = $weekSat[$i] ?? 0;
+                    $mingguanPemKuotaArr[$i] = ($weekPemKuota[$i] ?? 0) + ($weekPRKuota[$i] ?? 0);
+                    $mingguanPemArr[$i] = $weekPem[$i] ?? 0;
+                }
+
+                $_nilai_mingguan_reg = implode(',', $mingguanRegArr);
+                $_nilai_mingguan_satuan = implode(',', $mingguanSatArr);
+                $_nilai_mingguan_pem_kuota = implode(',', $mingguanPemKuotaArr);
+                $_nilai_mingguan_pem_nonkuota = implode(',', $mingguanPemArr);
+
                 return view('superadmin.index', compact(
                     'jumlahAdmin',
                     'jumlahKaryawan',
@@ -464,17 +576,23 @@ class HomeController extends Controller
                     'kgTahunIni',
                     'tahun',
                     'bulan',
+                    'minggu',
                     'hari',
                     'transaksi',
                     'ny',
                     'nm',
+                    'nw',
                     'nd',
                     'totalPemasukan'
                 ))->with('_tanggal', rtrim($tanggal, ','))
                     ->with('_nilai_reg', rtrim($_nilai_reg, ','))
                     ->with('_nilai_satuan', rtrim($_nilai_satuan, ','))
                     ->with('_nilai_pem_kuota', rtrim($_nilai_pem_kuota, ','))
-                    ->with('_nilai_pem_nonkuota', rtrim($_nilai_pem_nonkuota, ','));
+                    ->with('_nilai_pem_nonkuota', rtrim($_nilai_pem_nonkuota, ','))
+                    ->with('_nilai_mingguan_reg', $_nilai_mingguan_reg)
+                    ->with('_nilai_mingguan_satuan', $_nilai_mingguan_satuan)
+                    ->with('_nilai_mingguan_pem_kuota', $_nilai_mingguan_pem_kuota)
+                    ->with('_nilai_mingguan_pem_nonkuota', $_nilai_mingguan_pem_nonkuota);
             } elseif (Auth::user()->auth === "Customer") {
                 $user = Auth::user();
 

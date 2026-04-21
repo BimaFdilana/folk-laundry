@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="col-lg-3 col-sm-6 col-12">
-            <div class="card">
+            <div class="card"> 
                 <div class="card-header d-flex align-items-start pb-0">
                     <div>
                         <h2 class="text-bold-700 mb-0">{{ $masuk }}</h2>
@@ -117,27 +117,22 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-7 col-xl-7 col-12">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <h4 class="card-title">Data Per-hari</h4>
-                </div>
-                <div class="card-content">
-                    <div class="card-body pb-0">
-                        <div id="data-hari"></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Grafik Laundry Masuk</h4>
+                    <div class="btn-group" role="group" aria-label="Waktu Filter">
+                        <button type="button" class="btn btn-outline-primary active" id="btn-harian">Harian</button>
+                        <button type="button" class="btn btn-outline-primary" id="btn-mingguan">Mingguan</button>
+                        <button type="button" class="btn btn-outline-primary" id="btn-bulanan">Bulanan</button>
+                        <button type="button" class="btn btn-outline-primary" id="btn-tahunan">Tahunan</button>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-lg-5 col-xl-5 col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <h4 class="card-title">Data Per-bulan</h4>
-                </div>
                 <div class="card-content">
                     <div class="card-body pb-0">
-                        <div id="data-bulan"></div>
+                        <div style="overflow-x: auto;">
+                            <div id="data-chart" style="min-width: 800px;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -151,13 +146,43 @@
         var $purple = '#df87f2';
         var $strok_color = '#b9c3cd';
 
-        // Bar data bulan
+        // Data sources
+        const dataHarian = {
+            categories: [{{ $_tanggal }}],
+            series: [{
+                name: "Laundry Masuk",
+                data: [{{ $_nilai }}]
+            }]
+        };
+
+        const dataMingguan = {
+            categories: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4', 'Minggu 5'],
+            series: [{
+                name: "Laundry Masuk",
+                data: [{{ $_nilai_mingguan }}]
+            }]
+        };
+
+        const dataBulanan = {
+            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Juni', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            series: [{
+                name: "Laundry Masuk",
+                data: [{{ $jan }}, {{ $feb }}, {{ $mar }}, {{ $apr }}, {{ $mey }}, {{ $juni }}, {{ $july }}, {{ $aug }}, {{ $sep }}, {{ $oct }}, {{ $nov }}, {{ $dec }}]
+            }]
+        };
+
+        const dataTahunan = {
+            categories: [{{ $_tanggal_tahunan }}],
+            series: [{
+                name: "Laundry Masuk",
+                data: [{{ $_nilai_tahunan }}]
+            }]
+        };
+
         var salesavgChartoptions = {
             chart: {
-                height: 270,
-                toolbar: {
-                    show: false
-                },
+                height: 300,
+                toolbar: { show: false },
                 type: 'line',
                 dropShadow: {
                     enabled: true,
@@ -167,16 +192,9 @@
                     opacity: 0.20
                 },
             },
-            stroke: {
-                curve: 'smooth',
-                width: 4,
-            },
-            grid: {
-                borderColor: $label_color,
-            },
-            legend: {
-                show: false,
-            },
+            stroke: { curve: 'smooth', width: 4 },
+            grid: { borderColor: $label_color },
+            legend: { show: false },
             colors: [$purple],
             fill: {
                 type: 'gradient',
@@ -191,151 +209,50 @@
                     stops: [0, 100, 100, 100]
                 },
             },
-            markers: {
-                size: 0,
-                hover: {
-                    size: 5
-                }
-            },
+            markers: { size: 0, hover: { size: 5 } },
             xaxis: {
-                labels: {
-                    style: {
-                        colors: $strok_color,
-                    }
-                },
-                axisTicks: {
-                    show: false,
-                },
-                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Juni', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                axisBorder: {
-                    show: false,
-                },
+                labels: { style: { colors: $strok_color } },
+                axisTicks: { show: false },
+                categories: dataHarian.categories,
+                axisBorder: { show: false },
                 tickPlacement: 'on'
             },
             yaxis: {
                 tickAmount: 5,
                 labels: {
-                    style: {
-                        color: $strok_color,
-                    },
+                    style: { color: $strok_color },
                     formatter: function(val) {
                         return val > 999 ? (val / 1000).toFixed(1) + 'k' : val;
                     }
                 }
             },
-            tooltip: {
-                x: {
-                    show: false
-                }
-            },
-            series: [{
-                name: "Laundry Masuk",
-                data: [{{ $jan }}, {{ $feb }}, {{ $mar }}, {{ $apr }},
-                    {{ $mey }}, {{ $juni }}, {{ $july }}, {{ $aug }},
-                    {{ $sep }}, {{ $oct }}, {{ $nov }}, {{ $dec }}
-                ]
-            }],
+            tooltip: { x: { show: false } },
+            series: dataHarian.series
+        };
 
-        }
+        var mainChart = new ApexCharts(document.querySelector("#data-chart"), salesavgChartoptions);
+        mainChart.render();
 
-        var salesavgChart = new ApexCharts(
-            document.querySelector("#data-bulan"),
-            salesavgChartoptions
-        );
-
-        salesavgChart.render();
-        // End Bar bulan
-
-        // Bar Data Hari
-        var salesavgChartoptions = {
-            chart: {
-                height: 270,
-                toolbar: {
-                    show: false
-                },
-                type: 'line',
-                dropShadow: {
-                    enabled: true,
-                    top: 20,
-                    left: 2,
-                    blur: 6,
-                    opacity: 0.20
-                },
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 4,
-            },
-            grid: {
-                borderColor: $label_color,
-            },
-            legend: {
-                show: false,
-            },
-            colors: [$purple],
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shade: 'dark',
-                    inverseColors: false,
-                    gradientToColors: [$primary],
-                    shadeIntensity: 1,
-                    type: 'horizontal',
-                    opacityFrom: 1,
-                    opacityTo: 1,
-                    stops: [0, 100, 100, 100]
-                },
-            },
-            markers: {
-                size: 0,
-                hover: {
-                    size: 5
-                }
-            },
-            xaxis: {
-                labels: {
-                    style: {
-                        colors: $strok_color,
-                    }
-                },
-                axisTicks: {
-                    show: false,
-                },
-                categories: [{{ $_tanggal }}],
-                axisBorder: {
-                    show: false,
-                },
-                tickPlacement: 'on'
-            },
-            yaxis: {
-                tickAmount: 5,
-                labels: {
-                    style: {
-                        color: $strok_color,
-                    },
-                    formatter: function(val) {
-                        return val > 999 ? (val / 1000).toFixed(1) + 'k' : val;
-                    }
-                }
-            },
-            tooltip: {
-                x: {
-                    show: false
-                }
-            },
-            series: [{
-                name: "Laundry Masuk",
-                data: [{{ $_nilai }}],
-            }],
-
-        }
-
-        var salesavgChart = new ApexCharts(
-            document.querySelector("#data-hari"),
-            salesavgChartoptions
-        );
-
-        salesavgChart.render();
-        // End Bar
+        // Bind events
+        $('#btn-harian').on('click', function() {
+            $('.btn-group button').removeClass('active'); $(this).addClass('active');
+            mainChart.updateOptions({ xaxis: { categories: dataHarian.categories } });
+            mainChart.updateSeries(dataHarian.series);
+        });
+        $('#btn-mingguan').on('click', function() {
+            $('.btn-group button').removeClass('active'); $(this).addClass('active');
+            mainChart.updateOptions({ xaxis: { categories: dataMingguan.categories } });
+            mainChart.updateSeries(dataMingguan.series);
+        });
+        $('#btn-bulanan').on('click', function() {
+            $('.btn-group button').removeClass('active'); $(this).addClass('active');
+            mainChart.updateOptions({ xaxis: { categories: dataBulanan.categories } });
+            mainChart.updateSeries(dataBulanan.series);
+        });
+        $('#btn-tahunan').on('click', function() {
+            $('.btn-group button').removeClass('active'); $(this).addClass('active');
+            mainChart.updateOptions({ xaxis: { categories: dataTahunan.categories } });
+            mainChart.updateSeries(dataTahunan.series);
+        });
     </script>
 @endsection

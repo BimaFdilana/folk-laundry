@@ -159,7 +159,7 @@
                         @foreach ($laporanSatuanCustomer as $i => $item)
                             <tr>
                                 <td>{{ $i + 1 }}</td>
-                                <td>{{ $item->customers->name ?? '-' }}</td>
+                                <td>{{ optional($item->customers)->name ?? '-' }}</td>
                                 <td>{{ number_format($item->total_pcs, 2, ',', '.') }} pcs</td>
                                 <td>Rp. {{ number_format($item->total_harga, 0, ',', '.') }}</td>
                             </tr>
@@ -188,7 +188,7 @@
                         @foreach ($laporanKaryawanReguler as $i => $item)
                             <tr>
                                 <td>{{ $i + 1 }}</td>
-                                <td>{{ $item->karyawan->name ?? '-' }}</td>
+                                <td>{{ optional($item->karyawan)->name ?? '-' }}</td>
                                 <td>{{ number_format($item->total_kg, 2, ',', '.') }} kg</td>
                                 <td>{{ $item->total_lembar }} pcs</td>
                             </tr>
@@ -216,7 +216,7 @@
                         @foreach ($laporanKaryawanSatuan as $i => $item)
                             <tr>
                                 <td>{{ $i + 1 }}</td>
-                                <td>{{ $item->karyawan->name ?? '-' }}</td>
+                                <td>{{ optional($item->karyawan)->name ?? '-' }}</td>
                                 <td>{{ number_format($item->total_lembar, 2, ',', '.') }} pcs</td>
                             </tr>
                         @endforeach

@@ -178,7 +178,7 @@
                         </div>
                     </div>
                     <div class="col-xl-3 col-lg-3 col-md-5">
-                        <a href="https://wa.me/{{ $setpage->whatsapp }}" class="btn wantToWork-btn" target="_blank"><img
+                        <a href="https://wa.me/{{ optional($setpage)->whatsapp }}" class="btn wantToWork-btn" target="_blank"><img
                                 src="{{ asset('assets/img/icon/call2.png') }}" alt="">
                             Learn More</a>
                     </div>
